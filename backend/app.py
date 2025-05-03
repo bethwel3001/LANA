@@ -1,6 +1,14 @@
-from backend import create_app
+from flask import Flask
+from dotenv import load_dotenv
+import os
 
-app = create_app()
+load_dotenv()
 
-if __name__ == "__main__":
-    app.run(port=5000)
+app = Flask(__name__)
+app.secret_key = os.getenv('FLASK_SECRET_KEY')
+
+# Import routes AFTER app creation to avoid circular import
+from spotify_oauth import *
+
+if __name__ == '__main__':
+    app.run(port=5000, debug=True)
