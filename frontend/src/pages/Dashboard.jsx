@@ -1,23 +1,23 @@
 import { useEffect } from 'react'
-import { useAuth } from '../contexts/AuthContext'
-import HeroStats from '../components/Stats/HeroStats'
-import TopArtists from '../components/Charts/RadarChart'
-import ListeningTimeline from '../components/Charts/Timeline'
-import { Navigate } from 'react-router-dom'
+import HeroProfile from '../components/Dashboard/HeroProfile'
+import TopArtists from '../components/Dashboard/TopArtists'
+import ListeningActivity from '../components/Dashboard/ListeningActivity'
 
 export default function Dashboard() {
-  const { user, loading } = useAuth()
-
-  if (loading) return <div>Loading...</div>
-  if (!user) return <Navigate to="/" />
+  useEffect(() => {
+    // Check auth status on mount
+    fetch('/dashboard')
+      .then(res => {
+        if(!res.ok) window.location = '/login'
+      })
+  }, [])
 
   return (
-    <div className="min-h-screen bg-spotify-dark p-8 space-y-12">
-      <HeroStats user={user} />
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <TopArtists data={user.top_artists} />
-        <ListeningTimeline data={user.listening_history} />
+    <div className="min-h-screen bg-gray-900 p-8">
+      <div className="max-w-7xl mx-auto">
+        <HeroProfile />
+        <TopArtists />
+        <ListeningActivity />
       </div>
     </div>
   )
