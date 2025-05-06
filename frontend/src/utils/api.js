@@ -1,13 +1,16 @@
 import axios from 'axios'
 
 export const api = axios.create({
-  baseURL: process.env.NODE_ENV === 'development' 
-    ? 'http://localhost:5000' 
-    : '/api',
-  withCredentials: true
-})
+  // baseURL: 'http://localhost:5000',
+  baseURL: '/api',
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest' 
+  }
+});
 
-// Response interceptor remains same
 api.interceptors.response.use(
   response => response,
   error => {
@@ -16,4 +19,4 @@ api.interceptors.response.use(
     }
     return Promise.reject(error)
   }
-)
+);
