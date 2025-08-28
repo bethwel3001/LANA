@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import Button from '../components/Button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ButtonGroup from '../components/ButtonGroup';
 import CourseCard from '../components/CourseCard';
 import { 
@@ -19,11 +19,80 @@ import {
   HiCheck,
   HiUserGroup,
   HiOfficeBuilding,
-  HiHeart
-} from 'react-icons/hi';
+  HiHeart,
+  HiX,
+  HiMail} from 'react-icons/hi';
+import { HiLockClosed } from "react-icons/hi";
+
+// Counter component for fast counting animation
+const Counter = ({ value, duration = 1 }) => {
+  const [count, setCount] = useState(0);
+  const numericValue = parseInt(value.replace(/[^0-9]/g, ''));
+
+  useEffect(() => {
+    let start = 0;
+    const end = numericValue;
+    if (start === end) return;
+
+    // Faster counting with shorter interval
+    let incrementTime = 20; // milliseconds between increments
+    let incrementValue = Math.ceil(end / (duration * 1000 / incrementTime));
+    
+    let timer = setInterval(() => {
+      start += incrementValue;
+      if (start >= end) {
+        start = end;
+        clearInterval(timer);
+      }
+      setCount(start);
+    }, incrementTime);
+
+    return () => clearInterval(timer);
+  }, [numericValue, duration]);
+
+  return <span>{value.includes('%') ? `${count}%` : count.toLocaleString() + value.replace(/[0-9]/g, '')}</span>;
+};
 
 const Home = () => {
-  // Sample courses data
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [loginData, setLoginData] = useState({
+    email: '',
+    password: ''
+  });
+  const [loginError, setLoginError] = useState('');
+
+  const handleLoginSubmit = (e) => {
+    e.preventDefault();
+    
+    // Demo credentials check
+    if (loginData.email === 'demo@lana.org' && loginData.password === 'lana@2025') {
+      // Successful login
+      setIsLoginModalOpen(false);
+      setLoginError('');
+      // Redirect to enroll page
+      window.location.href = '/enroll';
+    } else {
+      setLoginError('Invalid credentials. Use demo@lana.org / lana@2025');
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setLoginData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleStartLearning = () => {
+    setIsLoginModalOpen(true);
+  };
+  const [newTestimonial, setNewTestimonial] = useState({
+    name: "",
+    message: "",
+    rating: 0,
+  });
   const courses = [
     {
       id: 1,
@@ -111,12 +180,6 @@ const Home = () => {
       rating: 4
     }
   ];
-    const [isOpen, setIsOpen] = useState(false);
-    const [newTestimonial, setNewTestimonial] = useState({
-      name: "",
-      message: "",
-      rating: 0,
-    });
   
     const handleStarClick = (rating) => {
       setNewTestimonial({ ...newTestimonial, rating });
@@ -186,11 +249,89 @@ const Home = () => {
       answer: 'Yes, you receive a digital certificate upon completing any course. These certificates can be shared on professional networks and added to your resume.'
     }
   ];
-
   return (
-  <div className="pt-20 bg-white dark:bg-gray-900 transition-colors duration-300">
-      {/* Hero Section */}
-    <div className="pt-20"> 
+    <div className="pt-20 bg-white dark:bg-gray-900 transition-colors duration-300">
+      {/* Login Modal */}
+      {isLoginModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div 
+            className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Sign In to LANA</h3>
+              <button 
+                onClick={() => setIsLoginModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <HiX className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleLoginSubmit} className="space-y-4">
+              {loginError && (
+                <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 text-red-700 dark:text-red-400 px-4 py-3 rounded">
+                  {loginError}
+                </div>
+              )}
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                <div className="relative">
+                  <HiMail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <input
+                    type="email"
+                    name="email"
+                    value={loginData.email}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                    placeholder="Enter your email"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                <div className="relative">
+                  <HiLockClosed className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <input
+                    type="password"
+                    name="password"
+                    value={loginData.password}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                    placeholder="Enter your password"
+                  />
+                </div>
+              </div>
+              
+              <div className="text-sm text-center">
+                <p className="text-gray-600 dark:text-gray-400">
+                  Demo credentials: demo@lana.org / lana@2025
+                </p>
+              </div>
+              
+              <Button type="submit" fullWidth={{ mobile: true, desktop: false }} className="justify-center">
+                Sign In
+              </Button>
+              
+              <div className="text-center">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Don't have an account?{' '}
+                  <button type="button" className="text-primary-600 hover:text-primary-700 font-medium">
+                    Sign up
+                  </button>
+                </p>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
       {/* Hero Section */}
       <section id="home" className="relative py-16 md:py-24 bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-gray-800 dark:to-gray-900">
         <div className="container mx-auto px-4">
@@ -210,15 +351,16 @@ const Home = () => {
               
               {/* Responsive Button Group */}
               <ButtonGroup responsive={true} className="gap-3 sm:gap-4">
-                <Link to="/enroll" className="flex-1 sm:flex-none">
+                <div className="flex-1 sm:flex-none">
                   <Button 
                     size={{ mobile: 'base', desktop: 'lg' }} 
                     fullWidth={{ mobile: true, desktop: false }}
                     className="justify-center"
+                    onClick={handleStartLearning}
                   >
                     Start Learning
                   </Button>
-                </Link>
+                </div>
                 <a href="#about">
                   <Button 
                     variant="outline" 
@@ -247,7 +389,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
       {/* Stats Section */}
       <section className="py-12 md:py-16 bg-white dark:bg-gray-800">
         <div className="container mx-auto px-4">
@@ -695,7 +836,6 @@ const Home = () => {
           </motion.div>
         </div>
       </section>
-    </div>
     </div>
   );
 };
