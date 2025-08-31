@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {  
   HiCalendar, 
@@ -15,10 +15,10 @@ import {
   HiBookOpen,
   HiLightningBolt,
   HiClock,
-  HiArrowRight,
   HiHome,
   HiUserGroup,
-  HiChat
+  HiMenu,
+  HiArrowLeft
 } from 'react-icons/hi';
 import AuthContext from '../context/AuthContext';
 
@@ -26,6 +26,8 @@ const Dashboard = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [activePopup, setActivePopup] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeSidebarItem, setActiveSidebarItem] = useState(null);
   const { isDarkMode, toggleTheme } = useContext(AuthContext);
   
   // Demo user data
@@ -33,9 +35,13 @@ const Dashboard = () => {
     name: 'Be Tu',
     email: 'demo@lana.org',
     interests: ['Science', 'Technology', 'Engineering', 'Mathematics'],
-    enrolledCourses: 5,
-    averageProgress: 48,
-    upcomingLessons: 3
+    enrolledCourses: 3,
+    averageProgress: 55,
+    upcomingLessons: 3,
+    joinDate: 'January 15, 2024',
+    lastActive: '2 hours ago',
+    learningStyle: 'Visual Learner',
+    achievements: ['Fast Learner Badge', 'Consistency Award', 'Tech Explorer']
   };
 
   const enrolledCourses = [
@@ -122,8 +128,29 @@ const Dashboard = () => {
   const handleQuitCourse = (courseId) => {
     // Logic to quit course would go here
     setActivePopup(null);
-    // This would typically send a notification and update the backend
   };
+
+  // Check screen size and adjust sidebar state
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+
+    handleResize(); // Set initial state
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Ensure sidebar is always open on large screens
+  useEffect(() => {
+    if (window.innerWidth >= 1024) {
+      setSidebarOpen(true);
+    }
+  }, []);
 
   const ProgressChart = ({ progress }) => {
     const circumference = 2 * Math.PI * 40;
@@ -166,58 +193,235 @@ const Dashboard = () => {
 
   const Sidebar = () => {
     const menuItems = [
-      { id: 'me', label: 'Me', icon: HiUser },
-      { id: 'notifications', label: 'Notifications', icon: HiBell },
-      { id: 'settings', label: 'Settings', icon: HiCog },
-      { id: 'book-courses', label: 'Book Courses', icon: HiBookOpen },
-      { id: 'mentor', label: 'Mentor', icon: HiUserGroup },
+      { id: 'home', label: 'Back to Site', icon: HiHome, action: () => window.location.href = '/' },
+      { id: 'me', label: 'Me', icon: HiUser, action: () => setActiveSidebarItem('me') },
+      { id: 'notifications', label: 'Notifications', icon: HiBell, action: () => setActiveSidebarItem('notifications') },
+      { id: 'settings', label: 'Settings', icon: HiCog, action: () => setActiveSidebarItem('settings') },
+      { id: 'book-courses', label: 'Book Courses', icon: HiBookOpen, action: () => setActiveSidebarItem('book-courses') },
+      { id: 'mentor', label: 'Mentor', icon: HiUserGroup, action: () => setActiveSidebarItem('mentor') },
       { id: 'theme', label: 'Theme', icon: isDarkMode ? HiSun : HiMoon, action: toggleTheme },
-      { id: 'logout', label: 'Log out', icon: HiLogout, className: 'text-red-600 dark:text-red-400' }
+      { id: 'logout', label: 'Log out', icon: HiLogout, className: 'text-red-600 dark:text-red-400', action: () => console.log('Logout') }
     ];
 
     return (
-      <div className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen fixed left-0 top-0 overflow-y-auto">
-        {/* Logo */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center space-x-2">
-            <HiAcademicCap className="h-8 w-8 text-primary-600" />
-            <span className="text-xl font-bold text-gray-900 dark:text-white">LANA</span>
+      <AnimatePresence>
+        {sidebarOpen && (
+          <>
+            {/* Overlay for mobile */}
+            {window.innerWidth < 1024 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+                onClick={() => setSidebarOpen(false)}
+              />
+            )}
+            
+            <motion.div
+              initial={{ x: -300, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -300, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen fixed left-0 top-0 overflow-y-auto z-50 lg:relative lg:left-0 lg:translate-x-0 lg:h-screen lg:flex-shrink-0 lg:border-r-0"
+            >
+              {/* Logo and close button */}
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <div className="flex items-center space-x-2">
+                  <HiAcademicCap className="h-8 w-8 text-primary-600" />
+                  <span className="text-xl font-bold text-gray-900 dark:text-white">LANA</span>
+                </div>
+                <button 
+                  onClick={() => setSidebarOpen(false)}
+                  className="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  <HiX className="h-6 w-6" />
+                </button>
+              </div>
+
+              {/* Menu Items */}
+              <nav className="p-4">
+                <ul className="space-y-2">
+                  {menuItems.map((item) => (
+                    <li key={item.id}>
+                      <button
+                        onClick={item.action}
+                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${item.className || ''}`}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        <span>{item.label}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    );
+  };
+
+  const SidebarContent = () => {
+    const content = {
+      me: (
+        <div className="p-6">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">My Profile</h3>
+          <div className="space-y-4">
+            <div className="flex items-center space-x-4">
+              <div className="h-16 w-16 bg-primary-600 rounded-full flex items-center justify-center">
+                <span className="text-white font-semibold text-xl">
+                  {user.name.split(' ').map(n => n[0]).join('')}
+                </span>
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-white">{user.name}</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Member since</p>
+                <p className="font-medium text-gray-900 dark:text-white">{user.joinDate}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Last active</p>
+                <p className="font-medium text-gray-900 dark:text-white">{user.lastActive}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Learning style</p>
+                <p className="font-medium text-gray-900 dark:text-white">{user.learningStyle}</p>
+              </div>
+            </div>
+            
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">INTERESTS</p>
+              <div className="flex flex-wrap gap-2">
+                {user.interests.map((interest, index) => (
+                  <span 
+                    key={index}
+                    className="px-3 py-1 bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300 rounded-full text-sm"
+                  >
+                    {interest}
+                  </span>
+                ))}
+              </div>
+            </div>
+            
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">ACHIEVEMENTS</p>
+              <div className="space-y-2">
+                {user.achievements.map((achievement, index) => (
+                  <div key={index} className="flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-300">
+                    <HiLightningBolt className="h-4 w-4 text-yellow-500" />
+                    <span>{achievement}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
+      ),
+      notifications: (
+        <div className="p-6">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Notifications</h3>
+          <div className="text-center py-12">
+            <HiBell className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-400">No notifications yet</p>
+            <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+              You'll see important updates here
+            </p>
+          </div>
+        </div>
+      ),
+      settings: (
+        <div className="p-6">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Settings</h3>
+          <div className="space-y-4">
+            <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Account Settings</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Manage your account preferences and security settings</p>
+            </div>
+            <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Notification Preferences</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Customize how and when you receive notifications</p>
+            </div>
+            <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Privacy & Data</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Control your data privacy settings</p>
+            </div>
+          </div>
+        </div>
+      ),
+      'book-courses': (
+        <div className="p-6">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Book Courses</h3>
+          <div className="text-center py-12">
+            <HiBookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-400">Course catalog coming soon</p>
+            <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+              Browse and book new courses from our expanding catalog
+            </p>
+          </div>
+        </div>
+      ),
+      mentor: (
+        <div className="p-6">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Mentor Program</h3>
+          <div className="text-center py-12">
+            <HiUserGroup className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-400">Mentor matching in progress</p>
+            <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+              We're finding the perfect mentor match for your learning journey
+            </p>
+          </div>
+        </div>
+      )
+    };
 
-        {/* Menu Items */}
-        <nav className="p-4">
-          <ul className="space-y-2">
-            {menuItems.map((item) => (
-              <li key={item.id}>
-                <button
-                  onClick={item.action}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${item.className || ''}`}
-                >
-                  <item.icon className="h-5 w-5" />
-                  <span>{item.label}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
+    return activeSidebarItem ? (
+      <div className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen fixed left-0 top-0 overflow-y-auto z-50 lg:relative lg:left-0 lg:translate-x-0 lg:h-screen lg:flex-shrink-0 lg:border-r-0">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center">
+          <button 
+            onClick={() => setActiveSidebarItem(null)}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 mr-2"
+          >
+            <HiArrowLeft className="h-5 w-5" />
+          </button>
+          <h3 className="font-semibold text-gray-900 dark:text-white">Back to Menu</h3>
+        </div>
+        {content[activeSidebarItem] || <div className="p-6">Content not found</div>}
       </div>
-    );
+    ) : null;
   };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-      {/* Sidebar */}
-      <Sidebar />
+      {/* Main Layout Container */}
+      <div className="flex">
+        {/* Sidebar - Hidden on mobile when closed, always visible on desktop */}
+        {sidebarOpen && <Sidebar />}
+        
+        {/* Sidebar Content - Hidden on mobile when closed, always visible on desktop */}
+        {sidebarOpen && <SidebarContent />}
 
-      {/* Main Content */}
-      <div className="ml-64">
+        {/* Main Content */}
+        <div className="flex-1 transition-all duration-300">
         {/* Header */}
         <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-          <div className="px-6 py-3 flex justify-between items-center">
-            {/* Welcome */}
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+          <div className="px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+            {/* Hamburger menu and welcome */}
+            <div className="flex items-center space-x-4">
+              <button 
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors lg:hidden"
+              >
+                <HiMenu className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+              </button>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+              </div>
             </div>
 
             {/* Navigation Icons */}
@@ -283,7 +487,6 @@ const Dashboard = () => {
                       {user.name.split(' ').map(n => n[0]).join('')}
                     </span>
                   </div>
-                  <span className="text-gray-700 dark:text-gray-300 font-medium">{user.name}</span>
                 </button>
 
                 {/* User Menu Dropdown */}
@@ -294,67 +497,24 @@ const Dashboard = () => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50"
+                      className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50"
                     >
-                      {/* User Info */}
-                      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center space-x-3 mb-3">
-                          <div className="h-12 w-12 bg-primary-600 rounded-full flex items-center justify-center">
-                            <span className="text-white font-semibold text-lg">
-                              {user.name.split(' ').map(n => n[0]).join('')}
-                            </span>
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-gray-900 dark:text-white">{user.name}</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
-                          </div>
-                        </div>
-                        
-                        {/* Interests */}
-                        <div>
-                          <p className="text-xs font-medium text-gray-500 dark:text-gray-500 mb-1">INTERESTS</p>
-                          <div className="flex flex-wrap gap-1">
-                            {user.interests.map((interest, index) => (
-                              <span 
-                                key={index}
-                                className="px-2 py-1 bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300 rounded-full text-xs"
-                              >
-                                {interest}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
+                      <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+                        <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
                       </div>
-
-                      {/* Menu Items */}
                       <div className="p-2">
-                        <button className="w-full flex items-center space-x-3 px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                          <HiUser className="h-5 w-5" />
-                          <span>Profile</span>
-                        </button>
-                        <button className="w-full flex items-center space-x-3 px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                          <HiCog className="h-5 w-5" />
-                          <span>Settings</span>
+                        <button className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                          View Profile
                         </button>
                         <button 
                           onClick={toggleTheme}
-                          className="w-full flex items-center space-x-3 px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                          className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                         >
-                          {isDarkMode ? (
-                            <>
-                              <HiSun className="h-5 w-5" />
-                              <span>Light Mode</span>
-                            </>
-                          ) : (
-                            <>
-                              <HiMoon className="h-5 w-5" />
-                              <span>Dark Mode</span>
-                            </>
-                          )}
+                          {isDarkMode ? 'Light Mode' : 'Dark Mode'}
                         </button>
-                        <button className="w-full flex items-center space-x-3 px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
-                          <HiLogout className="h-5 w-5" />
-                          <span>Logout</span>
+                        <button className="w-full text-left px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
+                          Logout
                         </button>
                       </div>
                     </motion.div>
@@ -366,7 +526,7 @@ const Dashboard = () => {
         </header>
 
         {/* Main Content */}
-        <main className="p-6">
+        <main className="p-4 sm:p-6 lg:p-8">
           {/* Welcome Section */}
           <motion.div 
             className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md mb-6"
@@ -380,60 +540,66 @@ const Dashboard = () => {
           </motion.div>
 
           {/* Progress Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 mb-6">
             {/* Courses Enrolled */}
             <motion.div 
-              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md cursor-pointer hover:shadow-lg transition-shadow"
+              className="bg-white dark:bg-gray-800 rounded-xl p-4 lg:p-6 shadow-md cursor-pointer hover:shadow-lg transition-shadow"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
               onClick={() => setActivePopup('courses')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               <div className="flex items-center">
-                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-4">
-                  <HiCollection className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                <div className="p-2 lg:p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-3 lg:mr-4">
+                  <HiCollection className="h-5 w-5 lg:h-6 lg:w-6 text-blue-600 dark:text-blue-400" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-sm text-gray-600 dark:text-gray-400">Courses Enrolled</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{user.enrolledCourses}</p>
+                  <p className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">{user.enrolledCourses}</p>
                 </div>
               </div>
             </motion.div>
 
             {/* Average Progress */}
             <motion.div 
-              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md cursor-pointer hover:shadow-lg transition-shadow"
+              className="bg-white dark:bg-gray-800 rounded-xl p-4 lg:p-6 shadow-md cursor-pointer hover:shadow-lg transition-shadow"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
               onClick={() => setActivePopup('progress')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               <div className="flex items-center">
-                <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg mr-4">
-                  <HiChartBar className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <div className="p-2 lg:p-3 bg-green-100 dark:bg-green-900/30 rounded-lg mr-3 lg:mr-4">
+                  <HiChartBar className="h-5 w-5 lg:h-6 lg:w-6 text-green-600 dark:text-green-400" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-sm text-gray-600 dark:text-gray-400">Average Progress</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{user.averageProgress}%</p>
+                  <p className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">{user.averageProgress}%</p>
                 </div>
               </div>
             </motion.div>
 
             {/* Upcoming Lessons */}
             <motion.div 
-              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md cursor-pointer hover:shadow-lg transition-shadow"
+              className="bg-white dark:bg-gray-800 rounded-xl p-4 lg:p-6 shadow-md cursor-pointer hover:shadow-lg transition-shadow"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
               onClick={() => setActivePopup('upcoming')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               <div className="flex items-center">
-                <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg mr-4">
-                  <HiCalendar className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                <div className="p-2 lg:p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg mr-3 lg:mr-4">
+                  <HiCalendar className="h-5 w-5 lg:h-6 lg:w-6 text-orange-600 dark:text-orange-400" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-sm text-gray-600 dark:text-gray-400">Upcoming Lessons</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{user.upcomingLessons}</p>
+                  <p className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">{user.upcomingLessons}</p>
                 </div>
               </div>
             </motion.div>
@@ -441,44 +607,45 @@ const Dashboard = () => {
 
           {/* Enrolled Courses */}
           <motion.div 
-            className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
+            className="bg-white dark:bg-gray-800 rounded-xl p-4 lg:p-6 shadow-md"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Your Courses</h3>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex justify-between items-center mb-4 lg:mb-6">
+              <h3 className="text-lg lg:text-xl font-bold text-gray-900 dark:text-white">Your Courses</h3>
+              <span className="text-xs lg:text-sm text-gray-600 dark:text-gray-400">
                 {enrolledCourses.length} of {user.enrolledCourses} courses
               </span>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3 lg:space-y-4">
               {enrolledCourses.map((course) => (
-                <div key={course.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-center mb-3">
-                    <div>
-                      <h4 className="font-semibold text-gray-900 dark:text-white">{course.title}</h4>
+                <div key={course.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 lg:p-4 hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-center mb-2 lg:mb-3">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-semibold text-gray-900 dark:text-white text-sm lg:text-base truncate">{course.title}</h4>
                       <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
                         {course.category}
                       </span>
                     </div>
-                    <span className="text-sm text-primary-600 font-medium">{course.progress}% Complete</span>
+                    <span className="text-xs lg:text-sm text-primary-600 font-medium ml-4">{course.progress}% Complete</span>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-3">
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2 lg:mb-3">
                     <div 
                       className="bg-primary-600 h-2 rounded-full transition-all duration-300" 
                       style={{ width: `${course.progress}%` }}
                     ></div>
                   </div>
-                  <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
-                    <span>Next: {course.nextLesson}</span>
-                    <span>{course.nextLessonTime}</span>
+                  <div className="flex justify-between items-center text-xs lg:text-sm text-gray-600 dark:text-gray-400">
+                    <span className="truncate">Next: {course.nextLesson}</span>
+                    <span className="ml-2">{course.nextLessonTime}</span>
                   </div>
                 </div>
               ))}
             </div>
           </motion.div>
         </main>
+        </div>
       </div>
 
       {/* Popup Modals */}
@@ -487,7 +654,7 @@ const Dashboard = () => {
         {activePopup === 'courses' && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <motion.div 
-              className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+              className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
@@ -503,11 +670,11 @@ const Dashboard = () => {
                   {enrolledCourses.map((course) => (
                     <div key={course.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                       <div className="flex justify-between items-start mb-3">
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <h4 className="font-semibold text-gray-900 dark:text-white">{course.title}</h4>
                           <p className="text-sm text-gray-600 dark:text-gray-400">Instructor: {course.instructor}</p>
                         </div>
-                        <span className="text-sm text-primary-600 font-medium">{course.progress}% Complete</span>
+                        <span className="text-sm text-primary-600 font-medium ml-4">{course.progress}% Complete</span>
                       </div>
                       <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-3">
                         <div 
@@ -515,7 +682,7 @@ const Dashboard = () => {
                           style={{ width: `${course.progress}%` }}
                         ></div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3">
                         <div>
                           <p>Lessons: {course.completedLessons}/{course.totalLessons}</p>
                           <p>Started: {course.startDate}</p>
@@ -547,7 +714,7 @@ const Dashboard = () => {
         {activePopup === 'progress' && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <motion.div 
-              className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-2xl"
+              className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-4xl"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
@@ -616,7 +783,7 @@ const Dashboard = () => {
         {activePopup === 'upcoming' && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <motion.div 
-              className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-2xl"
+              className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-4xl"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
@@ -632,12 +799,12 @@ const Dashboard = () => {
                   {upcomingLessons.map((lesson) => (
                     <div key={lesson.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                       <div className="flex justify-between items-start mb-3">
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <h4 className="font-semibold text-gray-900 dark:text-white">{lesson.title}</h4>
                           <p className="text-sm text-gray-600 dark:text-gray-400">{lesson.course}</p>
                           <p className="text-sm text-gray-600 dark:text-gray-400">Instructor: {lesson.instructor}</p>
                         </div>
-                        <span className="text-sm text-primary-600 font-medium">{lesson.time}</span>
+                        <span className="text-sm text-primary-600 font-medium ml-4">{lesson.time}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600 dark:text-gray-400">Duration: {lesson.duration}</span>
@@ -672,7 +839,7 @@ const Dashboard = () => {
   );
 };
 
-// Button component (if not already imported)
+// Button component
 const Button = ({ children, variant = 'primary', size = 'base', className = '', ...props }) => {
   const baseClasses = 'inline-flex items-center justify-center rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500';
   const variants = {
