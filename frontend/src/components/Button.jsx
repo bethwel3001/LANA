@@ -9,6 +9,7 @@ const Button = ({
   fullWidth = false,
   icon: Icon,
   iconPosition = 'left',
+  animate,
   ...props 
 }) => {
   // Base classes that apply to all buttons
@@ -52,11 +53,11 @@ const Button = ({
   
   // Size classes - optimized for mobile with touch-friendly sizes
   const sizes = {
-    xs: 'px-2.5 py-1.5 text-xs min-h-[32px]',
-    sm: 'px-3 py-2 text-sm min-h-[36px]',
-    base: 'px-4 py-2.5 text-sm min-h-[40px]',
-    lg: 'px-5 py-3 text-base min-h-[48px]',
-    xl: 'px-6 py-3.5 text-base min-h-[52px]'
+    xs: 'px-2 py-1 text-xs min-h-[28px]',
+    sm: 'px-2.5 py-1.5 text-xs min-h-[32px]',
+    base: 'px-3 py-2 text-sm min-h-[36px]',
+    lg: 'px-4 py-2.5 text-sm min-h-[40px]',
+    xl: 'px-5 py-3 text-base min-h-[44px]'
   };
   
   // Get the appropriate size class
@@ -96,6 +97,7 @@ const Button = ({
       whileTap={{ scale: 0.98 }}
       className={classes}
       {...props}
+      {...(animate && { animate })}
     >
       {Icon && iconPosition === 'left' && <Icon className={iconClass} />}
       <span className="truncate">{children}</span>
